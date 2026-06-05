@@ -211,6 +211,7 @@ final class DocumentWindowController: NSWindowController, TracksViewControllerDe
     func reloadData() {
         clearDetailsViewControllers()
         tracksViewController.mp4 = doc.mp4
+        updateUI()
     }
 
     // MARK: Tracks controller delegate
@@ -507,18 +508,9 @@ final class DocumentWindowController: NSWindowController, TracksViewControllerDe
         panel.canChooseDirectories = false
         panel.allowedFileTypes = supportedFileFormats
 
-        panel.beginSheetModal(for: windowForSheet) { (response) in
+        panel.beginSheetModal(for: windowForSheet) { [weak self] (response) in
             if response == NSApplication.ModalResponse.OK {
-                let ext = panel.url?.pathExtension.lowercased()
-                if ext == "txt", let url = panel.url {
-                    self.addChapters(fileURL: url)
-                }
-                else if ext == "csv", let url = panel.url {
-                    self.updateChapters(fileURL: url)
-                }
-                else {
-                    self.showImportSheet(fileURLs: panel.urls)
-                }
+                self?.handleDroppedFiles(panel.urls)
             }
         }
     }
@@ -603,32 +595,7 @@ final class DocumentWindowController: NSWindowController, TracksViewControllerDe
             let items = pasteboard.readObjects(forClasses: [NSURL.classForCoder()], options: [:]) as? [URL]
             else { return false }
 
-        let files = items.filter { MP42FileImporter.canInit(withFileType: $0.pathExtension) }
-
-        // If the document is clean and untitled, and a single media file is dropped, open it directly as a document so it can be saved/overwritten in-place.
-        if doc.fileURL == nil && mp4.tracks.isEmpty && files.count == 1, let fileURL = files.first {
-            NSDocumentController.shared.openDocument(withContentsOf: fileURL, display: true) { [weak self] (newDoc, alreadyOpen, error) in
-                if newDoc != nil {
-                    self?.doc.close()
-                }
-            }
-            return true
-        }
-
-        let chapters = items.filter { $0.pathExtension.lowercased() == "txt" }
-        if let url = chapters.first {
-            addChapters(fileURL: url)
-        }
-
-        let metadata = items.filter { let ext = $0.pathExtension.lowercased(); return ext == "xml" ||  ext == "nfo" }
-        if let url = metadata.first {
-            addMetadata(fileURL: url)
-        }
-
-        if files.isEmpty == false {
-            showImportSheet(fileURLs: files)
-        }
-
+        handleDroppedFiles(items)
         return true
     }
 
@@ -653,38 +620,62 @@ final class DocumentWindowController: NSWindowController, TracksViewControllerDe
 // MARK: - EmptyDocumentViewControllerDelegate
 extension DocumentWindowController: EmptyDocumentViewControllerDelegate {
     func emptyDocumentViewControllerDidRequestBrowseFiles(_ controller: EmptyDocumentViewController) {
-        if doc.fileURL == nil && mp4.tracks.isEmpty {
-            NSDocumentController.shared.openDocument(self)
-        } else {
-            self.selectFile(self)
-        }
+        self.selectFile(self)
     }
     
     func emptyDocumentViewController(_ controller: EmptyDocumentViewController, didDropFiles files: [URL]) {
-        let mediaFiles = files.filter { MP42FileImporter.canInit(withFileType: $0.pathExtension) }
+        handleDroppedFiles(files)
+    }
+}
 
-        // If the document is clean and untitled, and a single media file is dropped, open it directly as a document so it can be saved/overwritten in-place.
-        if doc.fileURL == nil && mp4.tracks.isEmpty && mediaFiles.count == 1, let fileURL = mediaFiles.first {
-            NSDocumentController.shared.openDocument(withContentsOf: fileURL, display: true) { [weak self] (newDoc, alreadyOpen, error) in
-                if newDoc != nil {
-                    self?.doc.close()
+// MARK: - File Loading and Importing Utilities
+extension DocumentWindowController {
+    private func handleDroppedFiles(_ files: [URL]) {
+        let mediaFiles = files.filter { MP42FileImporter.canInit(withFileType: $0.pathExtension) }
+        let otherFiles = files.filter { !MP42FileImporter.canInit(withFileType: $0.pathExtension) }
+        
+        for file in mediaFiles {
+            handleFileSelection(url: file)
+        }
+        for file in otherFiles {
+            handleFileSelection(url: file)
+        }
+    }
+
+    private func handleFileSelection(url: URL) {
+        let ext = url.pathExtension.lowercased()
+        
+        // If the document is clean and untitled, and a single media file is chosen/dropped, load it in-place to prevent opening new windows/instances.
+        if doc.fileURL == nil && mp4.tracks.isEmpty && ["mp4", "m4v", "m4a"].contains(ext) {
+            do {
+                try doc.read(from: url, ofType: "public.mpeg-4")
+                doc.fileURL = url
+                doc.fileType = "public.mpeg-4"
+                doc.updateChangeCount(.changeCleared)
+                
+                self.window?.representedURL = url
+                self.window?.title = url.lastPathComponent
+                
+                self.reloadData()
+            } catch {
+                if let windowForSheet = doc.windowForSheet {
+                    presentError(error, modalFor: windowForSheet, delegate: nil, didPresent: nil, contextInfo: nil)
+                } else {
+                    presentError(error)
                 }
             }
-            return
-        }
-
-        let chapters = files.filter { $0.pathExtension.lowercased() == "txt" }
-        if let url = chapters.first {
-            addChapters(fileURL: url)
-        }
-
-        let metadata = files.filter { let ext = $0.pathExtension.lowercased(); return ext == "xml" ||  ext == "nfo" }
-        if let url = metadata.first {
-            addMetadata(fileURL: url)
-        }
-
-        if mediaFiles.isEmpty == false {
-            showImportSheet(fileURLs: mediaFiles)
+        } else {
+            if ["txt", "csv"].contains(ext) {
+                if ext == "txt" {
+                    addChapters(fileURL: url)
+                } else {
+                    updateChapters(fileURL: url)
+                }
+            } else if ["xml", "nfo"].contains(ext) {
+                addMetadata(fileURL: url)
+            } else if MP42FileImporter.canInit(withFileType: ext) {
+                showImportSheet(fileURLs: [url])
+            }
         }
     }
 }
