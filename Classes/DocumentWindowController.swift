@@ -603,6 +603,18 @@ final class DocumentWindowController: NSWindowController, TracksViewControllerDe
             let items = pasteboard.readObjects(forClasses: [NSURL.classForCoder()], options: [:]) as? [URL]
             else { return false }
 
+        let files = items.filter { MP42FileImporter.canInit(withFileType: $0.pathExtension) }
+
+        // If the document is clean and untitled, and a single media file is dropped, open it directly as a document so it can be saved/overwritten in-place.
+        if doc.fileURL == nil && mp4.tracks.isEmpty && files.count == 1, let fileURL = files.first {
+            NSDocumentController.shared.openDocument(withContentsOf: fileURL, display: true) { [weak self] (newDoc, alreadyOpen, error) in
+                if newDoc != nil {
+                    self?.doc.close()
+                }
+            }
+            return true
+        }
+
         let chapters = items.filter { $0.pathExtension.lowercased() == "txt" }
         if let url = chapters.first {
             addChapters(fileURL: url)
@@ -613,7 +625,6 @@ final class DocumentWindowController: NSWindowController, TracksViewControllerDe
             addMetadata(fileURL: url)
         }
 
-        let files = items.filter { MP42FileImporter.canInit(withFileType: $0.pathExtension) }
         if files.isEmpty == false {
             showImportSheet(fileURLs: files)
         }
@@ -642,10 +653,26 @@ final class DocumentWindowController: NSWindowController, TracksViewControllerDe
 // MARK: - EmptyDocumentViewControllerDelegate
 extension DocumentWindowController: EmptyDocumentViewControllerDelegate {
     func emptyDocumentViewControllerDidRequestBrowseFiles(_ controller: EmptyDocumentViewController) {
-        self.selectFile(self)
+        if doc.fileURL == nil && mp4.tracks.isEmpty {
+            NSDocumentController.shared.openDocument(self)
+        } else {
+            self.selectFile(self)
+        }
     }
     
     func emptyDocumentViewController(_ controller: EmptyDocumentViewController, didDropFiles files: [URL]) {
+        let mediaFiles = files.filter { MP42FileImporter.canInit(withFileType: $0.pathExtension) }
+
+        // If the document is clean and untitled, and a single media file is dropped, open it directly as a document so it can be saved/overwritten in-place.
+        if doc.fileURL == nil && mp4.tracks.isEmpty && mediaFiles.count == 1, let fileURL = mediaFiles.first {
+            NSDocumentController.shared.openDocument(withContentsOf: fileURL, display: true) { [weak self] (newDoc, alreadyOpen, error) in
+                if newDoc != nil {
+                    self?.doc.close()
+                }
+            }
+            return
+        }
+
         let chapters = files.filter { $0.pathExtension.lowercased() == "txt" }
         if let url = chapters.first {
             addChapters(fileURL: url)
@@ -656,7 +683,6 @@ extension DocumentWindowController: EmptyDocumentViewControllerDelegate {
             addMetadata(fileURL: url)
         }
 
-        let mediaFiles = files.filter { MP42FileImporter.canInit(withFileType: $0.pathExtension) }
         if mediaFiles.isEmpty == false {
             showImportSheet(fileURLs: mediaFiles)
         }
