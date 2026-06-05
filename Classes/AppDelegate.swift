@@ -207,10 +207,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidation {
     }
 
     func applicationShouldOpenUntitledFile(_ sender: NSApplication) -> Bool {
-        if Prefs.showOpenPanelAtLaunch {
-            documentController.openDocument(self)
-        }
-        return false
+        return true
     }
 
     @IBAction func toggleStartStop(_ sender: Any?) {

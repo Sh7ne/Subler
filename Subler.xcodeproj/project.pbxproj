@@ -75,6 +75,7 @@
 		A98542DD20D1A7E500EB9803 /* ArtworkSelectorViewItem.xib in Resources */ = {isa = PBXBuildFile; fileRef = A98542DB20D1A7E500EB9803 /* ArtworkSelectorViewItem.xib */; };
 		A9859ACE1F4B43CC00022828 /* QueuePreset.swift in Sources */ = {isa = PBXBuildFile; fileRef = A9859ACD1F4B43CC00022828 /* QueuePreset.swift */; };
 		A98D44102036F661005CB092 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = A98D440F2036F661005CB092 /* AppDelegate.swift */; };
+		A97F5B012C3C910000000001 /* EmptyDocumentViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = A97F5B002C3C910000000001 /* EmptyDocumentViewController.swift */; };
 		A98D6BAB21FDC62800F0D886 /* Queue.swift in Sources */ = {isa = PBXBuildFile; fileRef = A98D6BAA21FDC62800F0D886 /* Queue.swift */; };
 		A98D98461F0280CB00A77ABC /* TheMovieDB.swift in Sources */ = {isa = PBXBuildFile; fileRef = A98D98451F0280CB00A77ABC /* TheMovieDB.swift */; };
 		A98D98481F02820F00A77ABC /* TheMovieDBService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A98D98471F02820F00A77ABC /* TheMovieDBService.swift */; };
@@ -346,6 +347,7 @@
 		A98BC09F20E623700035278B /* it */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = it; path = it.lproj/ArtworkSelector.strings; sourceTree = "<group>"; };
 		A98BC0A020E623700035278B /* it */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = it; path = it.lproj/PrefsWindowController.strings; sourceTree = "<group>"; };
 		A98D440F2036F661005CB092 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AppDelegate.swift; path = Classes/AppDelegate.swift; sourceTree = "<group>"; };
+		A97F5B002C3C910000000001 /* EmptyDocumentViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = EmptyDocumentViewController.swift; path = Classes/EmptyDocumentViewController.swift; sourceTree = "<group>"; };
 		A98D6BAA21FDC62800F0D886 /* Queue.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = Queue.swift; path = Classes/Queue.swift; sourceTree = "<group>"; };
 		A98D98451F0280CB00A77ABC /* TheMovieDB.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = TheMovieDB.swift; path = Classes/MetadataImporters/TheMovieDB.swift; sourceTree = "<group>"; };
 		A98D98471F02820F00A77ABC /* TheMovieDBService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = TheMovieDBService.swift; path = Classes/MetadataImporters/TheMovieDBService.swift; sourceTree = "<group>"; };
@@ -511,6 +513,7 @@
 				A9395E341F8B9ACA004C402B /* MP42FileAdditions.swift */,
 				A91EB968205ABAF400392E1C /* NSWindowAdditions.swift */,
 				A98D440F2036F661005CB092 /* AppDelegate.swift */,
+				A97F5B002C3C910000000001 /* EmptyDocumentViewController.swift */,
 				1DDD582A0DA1D0D100B32029 /* MainMenu.xib */,
 				A947218D1D49D9F700858DD8 /* Preferences */,
 				CD71FF1A12F1C46900F0A98D /* MetadataImporters */,
@@ -943,6 +946,7 @@
 				A97FA41E23E9837000EE5833 /* Ratings.swift in Sources */,
 				A956CE691F99E93D00093992 /* ButtonToolbarItem.swift in Sources */,
 				A98D44102036F661005CB092 /* AppDelegate.swift in Sources */,
+				A97F5B012C3C910000000001 /* EmptyDocumentViewController.swift in Sources */,
 				A9C31E572029A75F00CEF474 /* GeneralPrefsViewController.swift in Sources */,
 				A9AE26C01F3B66470041A57D /* SquaredTVArt.swift in Sources */,
 				A9B1056E2025D9B9009E91FC /* TracksViewController.swift in Sources */,
@@ -1565,7 +1569,7 @@
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				HEADER_SEARCH_PATHS = "";
 				LIBRARY_SEARCH_PATHS = "";
-				MACOSX_DEPLOYMENT_TARGET = 10.13;
+				MACOSX_DEPLOYMENT_TARGET = 26.0;
 				MODULE_VERIFIER_SUPPORTED_LANGUAGE_STANDARDS = "c11 gnu++14";
 				ONLY_ACTIVE_ARCH = YES;
 				OTHER_CFLAGS = "";
@@ -1651,7 +1655,7 @@
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				HEADER_SEARCH_PATHS = "";
 				LIBRARY_SEARCH_PATHS = "";
-				MACOSX_DEPLOYMENT_TARGET = 10.13;
+				MACOSX_DEPLOYMENT_TARGET = 26.0;
 				MODULE_VERIFIER_SUPPORTED_LANGUAGE_STANDARDS = "c11 gnu++14";
 				OTHER_CFLAGS = "";
 				RUN_CLANG_STATIC_ANALYZER = NO;

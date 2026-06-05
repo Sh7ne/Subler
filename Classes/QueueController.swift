@@ -57,9 +57,7 @@ final class QueueController : NSWindowController, NSWindowDelegate, NSPopoverDel
 
         window?.tabbingMode = .disallowed
 
-        if #available(macOS 11, *) {
-            window?.toolbarStyle = .unified
-        }
+        window?.toolbarStyle = .unified
 
         toolbarDelegate.target = self
 
@@ -67,11 +65,7 @@ final class QueueController : NSWindowController, NSWindowDelegate, NSPopoverDel
         toolbar.delegate = toolbarDelegate
         toolbar.allowsUserCustomization = true
         toolbar.autosavesConfiguration = true
-        if #available(macOS 26, *) {
-            toolbar.displayMode = .iconAndLabel
-        } else {
-            toolbar.displayMode = .iconOnly
-        }
+        toolbar.displayMode = .iconAndLabel
         self.window?.toolbar = toolbar
 
         table.registerForDraggedTypes([NSPasteboard.PasteboardType.fileURL, tablePasteboardType])

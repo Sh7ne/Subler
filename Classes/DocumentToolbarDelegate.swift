@@ -84,41 +84,14 @@ class DocumentToolbarDelegate: NSObject, NSToolbarDelegate {
 
             let label = NSLocalizedString("Action", comment: "Toolbar")
 
-            if #available(macOS 10.15, *) {
-                let item = NSMenuToolbarItem(itemIdentifier: itemIdentifier)
-                item.label = label
-                item.paletteLabel = label
-                item.toolTip = NSLocalizedString("Perform tasks with the selected items", comment: "Toolbar")
-                if #available(macOS 26.0, *) {
-                    item.showsIndicator = false
-                    item.image = NSImage.init(systemSymbolName: "ellipsis", accessibilityDescription: nil)
-                } else if #available(macOS 26.0, *) {
-                    item.image = NSImage.init(systemSymbolName: "ellipsis.circle", accessibilityDescription: nil)
-                } else {
-                    item.image = NSImage(named:"NSActionTemplate")
-                }
-                item.menu = menu
-                return item
-            } else {
-                let imageItem = NSMenuItem()
-                imageItem.image = NSImage(named:"NSActionTemplate")
-                imageItem.title = ""
-                menu.insertItem(imageItem, at: 0)
-
-                let popUpButton = NSPopUpButton()
-                popUpButton.bezelStyle = .toolbar
-                popUpButton.pullsDown = true
-                popUpButton.menu = menu
-
-                let item = ButtonToolbarItem(itemIdentifier: itemIdentifier)
-                item.label = label
-                item.paletteLabel = label
-                item.toolTip = NSLocalizedString("Perform tasks with the selected items", comment: "Toolbar")
-                item.view = popUpButton
-                item.minSize = NSSize(width: 48, height: 16)
-
-                return item
-            }
+            let item = NSMenuToolbarItem(itemIdentifier: itemIdentifier)
+            item.label = label
+            item.paletteLabel = label
+            item.toolTip = NSLocalizedString("Perform tasks with the selected items", comment: "Toolbar")
+            item.showsIndicator = false
+            item.image = NSImage.init(systemSymbolName: "ellipsis", accessibilityDescription: nil)
+            item.menu = menu
+            return item
         } else if itemIdentifier == .searchMetadata {
             return ButtonToolbarItem(itemIdentifier: itemIdentifier,
                                      label: NSLocalizedString("Search Metadata", comment: "Toolbar"),

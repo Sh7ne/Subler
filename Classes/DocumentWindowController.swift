@@ -30,6 +30,12 @@ final class DocumentWindowController: NSWindowController, TracksViewControllerDe
         fatalError("init(coder:) has not been implemented")
     }
 
+    private lazy var emptyDocumentViewController: EmptyDocumentViewController = {
+        let controller = EmptyDocumentViewController()
+        controller.delegate = self
+        return controller
+    }()
+
     private let toolbarDelegate = DocumentToolbarDelegate()
 
     override func windowDidLoad() {
@@ -39,9 +45,7 @@ final class DocumentWindowController: NSWindowController, TracksViewControllerDe
             fatalError("`window` is expected to be non nil by this time.")
         }
 
-        if #available(macOS 11, *) {
-            window.toolbarStyle = .expanded
-        }
+        window.toolbarStyle = .expanded
 
         toolbarDelegate.target = self
 
@@ -49,15 +53,12 @@ final class DocumentWindowController: NSWindowController, TracksViewControllerDe
         toolbar.delegate = toolbarDelegate
         toolbar.allowsUserCustomization = true
         toolbar.autosavesConfiguration = true
-        if #available(macOS 26, *) {
-            toolbar.displayMode = .iconAndLabel
-        } else {
-            toolbar.displayMode = .iconOnly
-        }
+        toolbar.displayMode = .iconAndLabel
         self.window?.toolbar = toolbar
 
-        window.contentViewController = splitViewController
-        window.registerForDraggedTypes([NSPasteboard.PasteboardType.fileURL])
+        window.setContentSize(NSSize(width: 960, height: 650))
+        window.center()
+        splitViewController.splitView.setPosition(220, ofDividerAt: 0)
 
         if Prefs.rememberDocumentWindowSize {
             window.setFrameAutosaveName("documentSave")
@@ -66,12 +67,36 @@ final class DocumentWindowController: NSWindowController, TracksViewControllerDe
             splitViewController.splitView.autosaveName = DocumentWindowController.splitViewResorationAutosaveName
             splitViewController.splitView.identifier = DocumentWindowController.splitViewResorationIdentifier
         }
-        else {
-            window.setContentSize(NSSize(width: 690, height: 510))
-            splitViewController.splitView.setPosition(160, ofDividerAt: 0)
-        }
+
+        updateContentView()
+        window.registerForDraggedTypes([NSPasteboard.PasteboardType.fileURL])
 
         didSelect(tracks: [])
+    }
+
+    private func updateContentView() {
+        guard let window = window else { return }
+        let targetController: NSViewController = mp4.tracks.isEmpty ? emptyDocumentViewController : splitViewController
+        
+        if window.contentViewController != targetController {
+            let currentFrame = window.frame
+            if let contentBounds = window.contentView?.bounds {
+                targetController.view.frame = contentBounds
+            }
+            window.contentViewController = targetController
+            window.setFrame(currentFrame, display: true)
+            
+            if targetController == emptyDocumentViewController {
+                window.minSize = NSSize(width: 600, height: 450)
+            } else {
+                window.minSize = NSSize(width: 900, height: 600)
+            }
+        }
+    }
+
+    private func updateUI() {
+        tracksViewController.reloadData()
+        updateContentView()
     }
 
     private static let splitViewResorationIdentifier = NSUserInterfaceItemIdentifier(rawValue: "splitViewSave")
@@ -215,7 +240,7 @@ final class DocumentWindowController: NSWindowController, TracksViewControllerDe
             if Prefs.inferMediaCharacteristics { mp4.inferMediaCharacteristics() }
 
             doc.updateChangeCount(.changeDone)
-            tracksViewController.reloadData()
+            updateUI()
         }
     }
 
@@ -321,7 +346,7 @@ final class DocumentWindowController: NSWindowController, TracksViewControllerDe
         }
 
         doc.updateChangeCount(.changeDone)
-        tracksViewController.reloadData()
+        updateUI()
     }
 
     @IBAction func iTunesFriendlyTrackGroups(_ sender: Any) {
@@ -330,7 +355,7 @@ final class DocumentWindowController: NSWindowController, TracksViewControllerDe
         mp4.inferMediaCharacteristics()
 
         doc.updateChangeCount(.changeDone)
-        tracksViewController.reloadData()
+        updateUI()
     }
 
     @IBAction func clearTrackNames(_ sender: Any) {
@@ -339,7 +364,7 @@ final class DocumentWindowController: NSWindowController, TracksViewControllerDe
         }
 
         doc.updateChangeCount(.changeDone)
-        tracksViewController.reloadData()
+        updateUI()
     }
 
     @IBAction func prettifyAudioTrackNames(_ sender: Any) {
@@ -349,13 +374,13 @@ final class DocumentWindowController: NSWindowController, TracksViewControllerDe
         }
 
         doc.updateChangeCount(.changeDone)
-        tracksViewController.reloadData()
+        updateUI()
     }
 
     @IBAction func fixAudioFallbacks(_ sender: Any) {
         mp4.setAutoFallback()
         doc.updateChangeCount(.changeDone)
-        tracksViewController.reloadData()
+        updateUI()
     }
 
     @IBAction func showTrackOffsetSheet(_ sender: Any) {
@@ -424,7 +449,7 @@ final class DocumentWindowController: NSWindowController, TracksViewControllerDe
         mp4.addTrack(MP42ChapterTrack(fromFile: fileURL))
 
         doc.updateChangeCount(.changeDone)
-        tracksViewController.reloadData()
+        updateUI()
     }
 
     private func updateChapters(fileURL: URL) {
@@ -504,7 +529,7 @@ final class DocumentWindowController: NSWindowController, TracksViewControllerDe
 
             if controller.onlyContainsSubtitles {
                 controller.addTracks(self)
-                tracksViewController.reloadData()
+                updateUI()
             } else {
                 contentViewController?.presentAsSheet(controller)
             }
@@ -524,7 +549,7 @@ final class DocumentWindowController: NSWindowController, TracksViewControllerDe
 
             // Call addTracks directly - the Settings initialization logic runs when the controller is created
             controller.addTracks(self)
-            tracksViewController.reloadData()
+            updateUI()
         } catch {
             if let windowForSheet = doc.windowForSheet {
                 presentError(error, modalFor: windowForSheet, delegate: nil, didPresent: nil, contextInfo: nil)
@@ -557,7 +582,7 @@ final class DocumentWindowController: NSWindowController, TracksViewControllerDe
             metadataViewController?.metadata = mp4.metadata
         }
 
-        tracksViewController.reloadData()
+        updateUI()
     }
 
     // MARK: Drag & drop
@@ -612,4 +637,28 @@ final class DocumentWindowController: NSWindowController, TracksViewControllerDe
     }
 
 
+}
+
+// MARK: - EmptyDocumentViewControllerDelegate
+extension DocumentWindowController: EmptyDocumentViewControllerDelegate {
+    func emptyDocumentViewControllerDidRequestBrowseFiles(_ controller: EmptyDocumentViewController) {
+        self.selectFile(self)
+    }
+    
+    func emptyDocumentViewController(_ controller: EmptyDocumentViewController, didDropFiles files: [URL]) {
+        let chapters = files.filter { $0.pathExtension.lowercased() == "txt" }
+        if let url = chapters.first {
+            addChapters(fileURL: url)
+        }
+
+        let metadata = files.filter { let ext = $0.pathExtension.lowercased(); return ext == "xml" ||  ext == "nfo" }
+        if let url = metadata.first {
+            addMetadata(fileURL: url)
+        }
+
+        let mediaFiles = files.filter { MP42FileImporter.canInit(withFileType: $0.pathExtension) }
+        if mediaFiles.isEmpty == false {
+            showImportSheet(fileURLs: mediaFiles)
+        }
+    }
 }

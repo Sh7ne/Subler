@@ -118,6 +118,8 @@ class MovieViewController: PropertyView, NSTableViewDataSource, ExpandedTableVie
 
         columnWidth = column.width
 
+        metadataTableView.rowHeight = 24
+        metadataTableView.intercellSpacing = NSSize(width: 8, height: 4)
         metadataTableView.defaultEditingColumn = 1
         metadataTableView.doubleAction = #selector(doubleClickAction(_:))
         metadataTableView.target = self
@@ -440,18 +442,21 @@ class MovieViewController: PropertyView, NSTableViewDataSource, ExpandedTableVie
     private func boolCell(state: Bool, tableView: NSTableView) -> CheckBoxCellView {
         guard let cell = tableView.makeView(withIdentifier: MovieViewController.boolCell, owner: self) as? CheckBoxCellView else { fatalError() }
         cell.checkboxButton.state = state ? .on : .off
+        cell.checkboxButton.font = NSFont.systemFont(ofSize: 14)
         return cell
     }
 
     private func textCell(string: String?, tableView: NSTableView) -> NSTableCellView {
         guard let cell = tableView.makeView(withIdentifier: MovieViewController.textCell, owner: self) as? NSTableCellView else { fatalError() }
-            cell.textField?.stringValue = string ?? ""
+        cell.textField?.stringValue = string ?? ""
+        cell.textField?.font = NSFont.systemFont(ofSize: 14)
         return cell
     }
 
     private func popUpRatingCell(contents: [String], value: String?, tableView: NSTableView) -> PopUpCellView {
         guard let cell = tableView.makeView(withIdentifier: MovieViewController.popUpCell, owner: self) as? PopUpCellView, let popUpButton = cell.popUpButton else { fatalError() }
 
+        popUpButton.font = NSFont.systemFont(ofSize: 14)
         popUpButton.removeAllItems()
 
         contents.forEach { popUpButton.menu?.addItem(withTitle: $0, action: nil, keyEquivalent: "") }
@@ -471,6 +476,7 @@ class MovieViewController: PropertyView, NSTableViewDataSource, ExpandedTableVie
     private func popUpCell(contents: [(title: String, value: Int)], value: Int?, tableView: NSTableView) -> PopUpCellView {
         guard let cell = tableView.makeView(withIdentifier: MovieViewController.popUpCell, owner: self) as? PopUpCellView, let popUpButton = cell.popUpButton else { fatalError() }
 
+        popUpButton.font = NSFont.systemFont(ofSize: 14)
         popUpButton.removeAllItems()
 
         contents.forEach {
@@ -497,6 +503,7 @@ class MovieViewController: PropertyView, NSTableViewDataSource, ExpandedTableVie
     private func comboBoxCell(contents: [String], value: String?, tableView: NSTableView) -> ComboBoxCellView {
         guard let cell = tableView.makeView(withIdentifier: MovieViewController.comboCell, owner: self) as? ComboBoxCellView, let comboBox = cell.comboBox else { fatalError() }
 
+        comboBox.font = NSFont.systemFont(ofSize: 14)
         comboBox.stringValue = value ?? NSLocalizedString("Unknown", comment: "")
         comboBox.addItems(withObjectValues: contents)
 
@@ -549,6 +556,7 @@ class MovieViewController: PropertyView, NSTableViewDataSource, ExpandedTableVie
 
             let cell = tableView.makeView(withIdentifier: MovieViewController.keyCell, owner: self) as? NSTableCellView
             cell?.textField?.stringValue = localizedMetadataKeyName(item.identifier)
+            cell?.textField?.font = NSFont.systemFont(ofSize: 14, weight: .medium)
             if #available(macOS 10.14, *) {
                 cell?.textField?.textColor = .secondaryLabelColor
             }
@@ -786,7 +794,7 @@ class MovieViewController: PropertyView, NSTableViewDataSource, ExpandedTableVie
         let item = tags[row]
 
         var calculateHeight = false
-        let minHeight = CGFloat(14)
+        let minHeight = CGFloat(24)
         var height = CGFloat(0)
 
         // Height calculation is slow, so calculate only if stricly necessary.
@@ -803,10 +811,11 @@ class MovieViewController: PropertyView, NSTableViewDataSource, ExpandedTableVie
             // Set the width in the dummy cell, and let autolayout calculate the height.
             dummyCellWidth.constant = columnWidth
             dummyCell.textField?.preferredMaxLayoutWidth = columnWidth
+            dummyCell.textField?.font = NSFont.systemFont(ofSize: 14)
             if let string = item.stringValue {
                 dummyCell.textField?.stringValue = string
             }
-            height = dummyCell.fittingSize.height
+            height = dummyCell.fittingSize.height + 8
             rowHeights[item.identifier] = height
         }
 
@@ -818,7 +827,7 @@ class MovieViewController: PropertyView, NSTableViewDataSource, ExpandedTableVie
         columnWidth = column.width
 
         if columnWidth > previousColumnWidth {
-            rowHeights = rowHeights.filter { $0.value < 14.0 }
+            rowHeights = rowHeights.filter { $0.value < 24.0 }
         } else {
             rowHeights.removeAll(keepingCapacity: true)
         }
