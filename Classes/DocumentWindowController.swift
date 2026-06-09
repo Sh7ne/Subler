@@ -72,6 +72,10 @@ final class DocumentWindowController: NSWindowController, TracksViewControllerDe
         window.registerForDraggedTypes([NSPasteboard.PasteboardType.fileURL])
 
         didSelect(tracks: [])
+
+        if !mp4.tracks.isEmpty {
+            adjustSplitViewDivider()
+        }
     }
 
     private func updateContentView() {
@@ -97,6 +101,40 @@ final class DocumentWindowController: NSWindowController, TracksViewControllerDe
     private func updateUI() {
         tracksViewController.reloadData()
         updateContentView()
+        if !mp4.tracks.isEmpty {
+            adjustSplitViewDivider()
+        }
+    }
+
+    private func adjustSplitViewDivider() {
+        DispatchQueue.main.async { [weak self] in
+            guard let self = self, let window = self.window else { return }
+            
+            let desiredHeight: CGFloat
+            if let tableView = self.tracksViewController.tracksTable, tableView.numberOfRows > 0 {
+                let numberOfRows = tableView.numberOfRows
+                let lastRowRect = tableView.rect(ofRow: numberOfRows - 1)
+                let totalRowsHeight = lastRowRect.maxY
+                let extraRowHeight = lastRowRect.height > 0 ? lastRowRect.height : tableView.rowHeight
+                let headerHeight = tableView.headerView?.frame.height ?? 23
+                
+                // Add a small safety margin for scrollview borders/padding (usually 4-8pt)
+                desiredHeight = headerHeight + totalRowsHeight + extraRowHeight + 6
+            } else {
+                // Fallback basic calculation
+                let rowCount = self.mp4.tracks.count + 2 // tracks + metadata + 1 extra row
+                let rowHeight: CGFloat = 20
+                let headerHeight: CGFloat = 23
+                let padding: CGFloat = 8
+                desiredHeight = headerHeight + CGFloat(rowCount) * rowHeight + padding
+            }
+            
+            let dividerThickness = self.splitViewController.splitView.dividerThickness
+            let maxAllowedHeight = window.contentView!.bounds.height - 320 - dividerThickness
+            let finalHeight = max(100, min(desiredHeight, maxAllowedHeight))
+            
+            self.splitViewController.splitView.setPosition(finalHeight, ofDividerAt: 0)
+        }
     }
 
     private static let splitViewResorationIdentifier = NSUserInterfaceItemIdentifier(rawValue: "splitViewSave")
